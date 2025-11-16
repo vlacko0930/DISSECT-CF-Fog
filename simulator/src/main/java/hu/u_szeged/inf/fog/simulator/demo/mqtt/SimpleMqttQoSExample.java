@@ -81,11 +81,10 @@ public class SimpleMqttQoSExample {
             MqttMetricsCollector.getInstance().registerPublisher(device.getPublisher());
             
             // Create subscriber repository
-            Map<String, Integer> subLatencyMap = new HashMap<>();
-            subLatencyMap.put("subscriber-repo-" + i, 10);
+            LatencyMap.put("subscriber-repo-" + i, 10);
             
             Repository subRepo = new Repository(4_294_967_296L, "subscriber-repo-" + i, 3_250, 3_250, 3_250,
-                    subLatencyMap, stTransitions, nwTransitions);
+                    LatencyMap, stTransitions, nwTransitions);
             subRepo.setState(NetworkNode.State.RUNNING);
             
             // Create subscriber
