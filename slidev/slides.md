@@ -599,7 +599,122 @@ public class MqttSubscriber extends MqttClient {
 ---
 
 
+```java {*}{maxHeight:'500px'}
+public class SimpleMqttQoSExample {
+    public static void main(String[] args) throws Exception {
+        // ..., Create broker repository
+        long brokerStorage = 10_737_418_240L; /* 10 GB */ long brokerBandwidth = 125_000; /* 1 Gbps */Map<String, Integer> LatencyMap = new HashMap<>();
+        LatencyMap.put("broker-repo", 5);
+        
+        Repository brokerRepo = new Repository(brokerStorage, "broker-repo", brokerBandwidth, brokerBandwidth, brokerBandwidth, LatencyMap, stTransitions, nwTransitions); brokerRepo.setState(NetworkNode.State.RUNNING);
+        
+        // Create MQTT broker with 100ms processing frequency and 5 second idle timeout
+        MqttBroker broker = new MqttBroker(brokerRepo, 100, 5000);MqttMetricsCollector.getInstance().registerBroker(broker); broker.start();
+                
+        // Create devices with different QoS levels
+        QoSLevel[] qosLevels = {QoSLevel.AT_MOST_ONCE, QoSLevel.AT_LEAST_ONCE, QoSLevel.EXACTLY_ONCE}; String[] qosNames = {"QoS 0 (At most once)", "QoS 1 (At least once)", "QoS 2 (Exactly once)"};
+        
+        List<MqttSmartDevice> devices = new ArrayList<>(); List<MqttSubscriber> subscribers = new ArrayList<>();
+        
+        for (int i = 0; i < qosLevels.length; i++) {
+            // Create device repository
+            LatencyMap.put("device-repo-" + i, 5); Repository deviceRepo = new Repository(4_294_967_296L, "device-repo-" + i, 3_250, 3_250, 3_250, LatencyMap, stTransitions, nwTransitions);
+            deviceRepo.setState(NetworkNode.State.RUNNING);
+            
+            PhysicalMachine devicePm = new PhysicalMachine(1, 0.001, 1_073_741_824L, deviceRepo, 1, 1, cpuTransitions);
+            
+            // Create MQTT device
+            String topic = "sensors/test/device" + i;
+            MqttSmartDevice device = new MqttSmartDevice(0, 10000, 500, 2000, /* start, stop, size, freq */new StaticMobilityStrategy(GeoLocation.generateRandomGeoLocation()), new PliantDeviceStrategy(), devicePm, 50, false, broker, topic, qosLevels[i]
+            ); devices.add(device); MqttMetricsCollector.getInstance().registerPublisher(device.getPublisher());
+            
+            LatencyMap.put("subscriber-repo-" + i, 10);
+            
+            Repository subRepo = new Repository(4_294_967_296L, "subscriber-repo-" + i, 3_250, 3_250, 3_250,
+                    LatencyMap, stTransitions, nwTransitions); subRepo.setState(NetworkNode.State.RUNNING);
+            
+            // Create subscriber
+            MqttSubscriber subscriber = new MqttSubscriber("subscriber-" + i, subRepo); subscriber.connect(broker); subscriber.subscribe(topic, qosLevels[i]);
+            
+            subscribers.add(subscriber); MqttMetricsCollector.getInstance().registerSubscriber(subscriber);
+            
+            System.out.println("Created Device " + i + " with " + qosNames[i] + " publishing to: " + topic);
+        }
+        // Run simulation
+        long startTime = System.nanoTime(); Timed.simulateUntilLastEvent(); long stopTime = System.nanoTime();
+        
+        MqttMetricsCollector.getInstance().endSimulation();
+        
+        System.out.println("\nSimulation completed!");
+        System.out.println("Execution time: " + ((stopTime - startTime) / 1_000_000) + " ms\n");
+        
+        System.out.println(MqttMetricsCollector.getInstance().generateReport());
 
+        // Display detailed QoS comparison
+        for (int i = 0; i < qosLevels.length; i++) { /* ... */}
+        
+    }
+}
+```
+
+---
+
+# Massive Scale Demo - 10,000 Devices
+
+<div class="text-sm">
+
+**MqttMassiveScaleExample.java** - Scalability demonstration:
+
+- **10,000 IoT devices** organized hierarchically
+- **1,000 unique topics**: `datacenter/{1-10}/rack/{1-100}/sensor/{1-10}`
+- **1 central MQTT broker** (50ms processing, 10s idle timeout)
+- **100 subscribers** with wildcard patterns:
+  - Datacenter monitors: `datacenter/{id}/#` (10 subscribers)
+  - Rack monitors: `datacenter/{dc}/rack/{id}/#` (20 subscribers)
+  - Sensor monitors: `datacenter/+/rack/+/sensor/{id}` (70 subscribers)
+- **Mixed QoS levels**: 70% QoS0, 20% QoS1, 10% QoS2
+- **Shared latency map** for all entities (critical for simulator)
+- **60 second simulation** duration
+- **5 second** message frequency per device
+
+</div>
+
+```java {*|52-56|95-107|139-169}{maxHeight:'250px'}
+// Key architecture decisions:
+public class MqttMassiveScaleExample {
+    private static final int TOTAL_DEVICES = 10_000;
+    private static final int NUM_SUBSCRIBERS = 100;
+    
+    // CRITICAL: Single shared latency map
+    Map<String, Integer> latencyMap = new HashMap<>();
+    
+    // High-capacity broker
+    long brokerBandwidth = 1_250_000; // 10 Gbps
+    MqttBroker broker = new MqttBroker(brokerRepo, 50, 10000);
+    
+    // 100 subscribers with wildcard patterns
+    subscriber.subscribe("datacenter/" + dc + "/#", QoSLevel.AT_MOST_ONCE);
+    subscriber.subscribe("datacenter/+/rack/+/sensor/" + id, QoSLevel.AT_MOST_ONCE);
+    
+    // 10,000 devices in hierarchical structure
+    for (int dc = 1; dc <= 10; dc++) {
+        for (int rack = 1; rack <= 100; rack++) {
+            for (int sensor = 1; sensor <= 10; sensor++) {
+                String topic = "datacenter/" + dc + "/rack/" + rack + "/sensor/" + sensor;
+                // Add to SHARED latency map
+                latencyMap.put(repoName, 10);
+                MqttSmartDevice device = new MqttSmartDevice(..., broker, topic, qos);
+            }
+        }
+    }
+}
+```
+
+<div class="text-xs mt-4">
+Expected throughput: ~120,000 messages over 60s simulation (~2,000 msg/s)
+</div>
+
+---
 
 # A teljes prompt
 
