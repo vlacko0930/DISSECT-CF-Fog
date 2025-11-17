@@ -7,11 +7,21 @@ drawings:
   persist: false
 transition: slide-left
 mdc: true
+hideInToc: true
+themeConfig:
+  paginationX: 0
+  paginationY: 0
+coverDate: ""
 ---
 
 # MQTT Protokoll implementálása a szimulátorba
 
 
+---
+layout: table-of-contents
+hideInToc: true
+---
+# 
 ---
 layout: figure
 figureUrl: https://d8wojkg2185gh.cloudfront.net/strapi/Mqtt3_339170e0df.webp
@@ -36,7 +46,7 @@ figureUrl: https://images.ctfassets.net/8aevphvgewt8/2Zamxo7a7F9K9jsTAl2EGA/bce1
 - Claude Sonnet 4.5 - Agent mód
 ---
 
-# Az első prompt:
+# Az első prompt
 
 - from the PDF
 
@@ -659,7 +669,7 @@ public class SimpleMqttQoSExample {
 
 ---
 
-# 10.000 eszközös próba
+# 10.000 eszközös próba - report.md
 
 ```md {*}{maxHeight:'400px'}
 ========== Simulation Completed ==========
@@ -685,6 +695,8 @@ Average message latency: 100,62 ms
 
 
 ```
+---
+hideInToc: true
 ---
 
 # 10.000 eszközös próba - report.md
