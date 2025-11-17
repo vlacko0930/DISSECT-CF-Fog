@@ -107,7 +107,7 @@ public class MqttBroker extends Timed {
      * @param processingFrequency the frequency for processing messages (in ms)
      */
     public MqttBroker(Repository repository, long processingFrequency) {
-        this(repository, processingFrequency, 0);
+        this(repository, processingFrequency, 5000);
     }
 
     /**
@@ -359,6 +359,7 @@ public class MqttBroker extends Timed {
                             statistics.incrementMessagesDelivered();
                             statistics.addBytesDelivered(message.getPayloadSize());
                             topicManager.recordDelivery(message.getTopic());
+                            MqttMetricsCollector.getInstance().recordDelivery(message);
                             SimLogger.logRun("QoS0: Message " + message.getMessageId() + " delivered to " +
                                     subscriber.getClientId() + " at: " + Timed.getFireCount() +
                                     " (latency: " + message.getEndToEndLatency() + "ms)");
@@ -398,6 +399,10 @@ public class MqttBroker extends Timed {
                             
                             // Wait for PUBACK
                             awaitingAck.put(message.getMessageId(), message);
+                            statistics.incrementMessagesDelivered();
+                            statistics.addBytesDelivered(message.getPayloadSize());
+                            topicManager.recordDelivery(message.getTopic());
+                            MqttMetricsCollector.getInstance().recordDelivery(message);
                             SimLogger.logRun("QoS1: Message " + message.getMessageId() + " delivered to " +
                                     subscriber.getClientId() + ", awaiting PUBACK at: " + Timed.getFireCount());
                         }
@@ -436,6 +441,10 @@ public class MqttBroker extends Timed {
                             
                             // Wait for PUBREC
                             awaitingPubRec.put(message.getMessageId(), message);
+                            statistics.incrementMessagesDelivered();
+                            statistics.addBytesDelivered(message.getPayloadSize());
+                            topicManager.recordDelivery(message.getTopic());
+                            MqttMetricsCollector.getInstance().recordDelivery(message);
                             SimLogger.logRun("QoS2: Message " + message.getMessageId() + " delivered to " +
                                     subscriber.getClientId() + ", awaiting PUBREC at: " + Timed.getFireCount());
                         }
